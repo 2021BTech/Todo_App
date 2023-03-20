@@ -1,25 +1,67 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+//Use State
+import { useEffect, useState } from "react";
+//component
+import { Header } from "./components/Header";
+import { Tasks } from "./components/Tasks";
+
+const LOCAL_STORAGE_KEY = 'todo:tasks';
 
 function App() {
+  const [tasks, setTasks] = useState([]);
+
+  function loadSavedTasks() {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if(saved) {
+      setTasks(JSON.parse(saved));
+    }
+  }
+
+  function setTasksAndSave(newTasks) {
+    setTasks(newTasks);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newTasks));
+  }
+
+  useEffect(() => {
+    loadSavedTasks();
+  }, [])
+
+  function addTask(taskTitle) {
+    setTasksAndSave([...tasks, {
+      id: crypto.randomUUID(),
+      title: taskTitle,
+      isCompleted: false
+    }]);
+  }
+
+  function deleteTaskById(taskId) {
+    const newTasks = tasks.filter(task => task.id !== taskId);
+    setTasksAndSave(newTasks);
+  }
+
+  function toggleTaskCompletedById(taskId) {
+    const newTasks = tasks.map(task => {
+      if(task.id === taskId) {
+        return {
+          ...task,
+          isCompleted: !task.isCompleted
+        }
+      }
+      return task;
+    });
+    setTasksAndSave(newTasks);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <>
+      <Header handleAddTask={addTask} />
+      <Tasks
+        tasks={tasks}
+        onDelete={deleteTaskById}
+        onComplete={toggleTaskCompletedById}
+      />
+    </>
+  )
 }
 
-export default App;
+export default App
